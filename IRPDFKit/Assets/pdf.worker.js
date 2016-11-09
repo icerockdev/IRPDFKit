@@ -37864,7 +37864,8 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
         fakeMultiSpaceMax: -0,
         textRunBreakAllowed: false,
         transform: null,
-        fontName: null
+        fontName: null,
+        strCharsWidths: []
       };
       var SPACE_FACTOR = 0.3;
       var MULTI_SPACE_FACTOR = 1.5;
@@ -37912,7 +37913,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
             tsm[3] *= glyphHeight;
           }
         }
-
+                        
         var trm = Util.transform(textState.ctm,
                                  Util.transform(textState.textMatrix, tsm));
         textContentItem.transform = trm;
@@ -37952,7 +37953,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
           textContentItem.fakeMultiSpaceMax = 0;
           textContentItem.textRunBreakAllowed = false;
         }
-
+                        
 
         textContentItem.initialized = true;
         return textContentItem;
@@ -37979,7 +37980,8 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
           width: textChunk.width,
           height: textChunk.height,
           transform: textChunk.transform,
-          fontName: textChunk.fontName
+          fontName: textChunk.fontName,
+          strCharsWidths: textChunk.strCharsWidths.slice()
         };
       }
 
@@ -38042,7 +38044,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
             var wordSpacing = textState.wordSpacing;
             charSpacing += wordSpacing;
             if (wordSpacing > 0) {
-              addFakeSpaces(wordSpacing, textChunk.str);
+              addFakeSpaces(wordSpacing, textChunk);
             }
           }
 
@@ -38061,6 +38063,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
           textState.translateTextMatrix(tx, ty);
 
           textChunk.str.push(glyphUnicode);
+          textChunk.strCharsWidths.push(tx * textChunk.textAdvanceScale);
         }
 
         if (!font.vertical) {
@@ -38074,17 +38077,19 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
         return textChunk;
       }
 
-      function addFakeSpaces(width, strBuf) {
+      function addFakeSpaces(width, textChunk) {
         if (width < textContentItem.fakeSpaceMin) {
           return;
         }
         if (width < textContentItem.fakeMultiSpaceMin) {
-          strBuf.push(' ');
+          textChunk.str.push(' ');
+          textChunk.strCharsWidths.push(textContentItem.spaceWidth * textChunk.textAdvanceScale);
           return;
         }
         var fakeSpaces = Math.round(width / textContentItem.spaceWidth);
         while (fakeSpaces-- > 0) {
-          strBuf.push(' ');
+          textChunk.str.push(' ');
+          textChunk.strCharsWidths.push(textContentItem.spaceWidth * textChunk.textAdvanceScale);
         }
       }
 
@@ -38096,6 +38101,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
 
         textContentItem.initialized = false;
         textContentItem.str.length = 0;
+        textContentItem.strCharsWidths.length = 0;
       }
 
       var timeSlotManager = new TimeSlotManager();
@@ -38160,7 +38166,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
                   (args[1] - textContentItem.lastAdvanceHeight);
                 var diff = (args[0] - textContentItem.lastAdvanceWidth) -
                            (args[1] - textContentItem.lastAdvanceHeight);
-                addFakeSpaces(diff, textContentItem.str);
+                addFakeSpaces(diff, textContentItem);
                 break;
               }
 
@@ -38242,7 +38248,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
                   if (breakTextRun) {
                     flushTextContentItem();
                   } else if (advance > 0) {
-                    addFakeSpaces(advance, textContentItem.str);
+                    addFakeSpaces(advance, textContentItem);
                   }
                 }
               }
