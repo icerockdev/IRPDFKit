@@ -1,0 +1,11 @@
+use_frameworks!
+
+target 'IRPDFKit_Example' do
+  pod 'IRPDFKit', :path => '../'
+
+  target 'IRPDFKit_Tests' do
+    inherit! :search_paths
+
+    
+  end
+end
