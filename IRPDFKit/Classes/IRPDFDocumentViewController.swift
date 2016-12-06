@@ -51,6 +51,11 @@ public class IRPDFDocumentViewController: UIViewController {
     }
     
     pdfPagesScrollView.delegate = self
+    
+    var doubleTapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(doubleTapGesture))
+    doubleTapGestureRecognizer.numberOfTapsRequired = 2
+    
+    pdfPagesScrollView.addGestureRecognizer(doubleTapGestureRecognizer)
   }
   
   public func reloadData() {
@@ -114,6 +119,20 @@ public class IRPDFDocumentViewController: UIViewController {
     searchViewController.popoverPresentationController?.barButtonItem = anchor
     
     presentViewController(searchViewController, animated: true, completion: nil)
+  }
+}
+
+extension IRPDFDocumentViewController {
+  func doubleTapGesture(gestureRecognizer: UITapGestureRecognizer) {
+    
+    let zoomScale: CGFloat
+    if pdfPagesScrollView.zoomScale > pdfPagesScrollView.minimumZoomScale {
+      zoomScale = pdfPagesScrollView.minimumZoomScale
+    } else {
+      zoomScale = pdfPagesScrollView.maximumZoomScale
+    }
+    
+    pdfPagesScrollView.setZoomScale(zoomScale, animated: true)
   }
 }
 
