@@ -23,13 +23,13 @@ class ViewController: UIViewController {
     addChildViewController(documentViewController)
     
     documentViewController.view.frame = contentView.bounds
-    documentViewController.view.autoresizingMask = [.FlexibleHeight, .FlexibleWidth]
+    documentViewController.view.autoresizingMask = [.flexibleHeight, .flexibleWidth]
     contentView.addSubview(documentViewController.view)
     
-    documentViewController.didMoveToParentViewController(self)
+    documentViewController.didMove(toParentViewController: self)
     
     let dtGesture = UISwipeGestureRecognizer(target: self, action: #selector(changeDocumentGesture))
-    dtGesture.direction = .Right
+    dtGesture.direction = .right
     
     documentViewController.view.addGestureRecognizer(dtGesture)
   }
@@ -39,18 +39,18 @@ class ViewController: UIViewController {
     // Dispose of any resources that can be recreated.
   }
 
-  func changeDocumentGesture(sender: UISwipeGestureRecognizer) {
+  func changeDocumentGesture(_ sender: UISwipeGestureRecognizer) {
     number += 1
     if number > 6 {
       number = 1
     }
     
-    let url = NSBundle.mainBundle().URLForResource("document\(number)", withExtension: "pdf")!
+    let url = Bundle.main.url(forResource: "document\(number)", withExtension: "pdf")!
     
     documentViewController.pdfDocumentUrl = url
   }
   
-  @IBAction func searchButtonPressed(sender: UIBarButtonItem) {
+  @IBAction func searchButtonPressed(_ sender: UIBarButtonItem) {
     documentViewController.presentSearchViewController(sender)
   }
 }

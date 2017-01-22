@@ -10,13 +10,13 @@ private let loadingCellIdentifier = "loadingCell"
 private let infoCellIdentifier = "infoCell"
 
 protocol IRPDFSearchResultsDelegate: class {
-  func searchResultsViewController(viewController: IRPDFSearchResultsViewController,
+  func searchResultsViewController(_ viewController: IRPDFSearchResultsViewController,
                                    receiveResults: [IRPDFSearchResult]?)
   
-  func searchResultsViewController(viewController: IRPDFSearchResultsViewController,
+  func searchResultsViewController(_ viewController: IRPDFSearchResultsViewController,
                                    didSelectResult: IRPDFSearchResult)
   
-  func searchResultsViewController(viewController: IRPDFSearchResultsViewController,
+  func searchResultsViewController(_ viewController: IRPDFSearchResultsViewController,
                                    queryChanged: String?)
 }
 
@@ -49,39 +49,41 @@ class IRPDFSearchResultsViewController: UITableViewController {
     tableView.tableHeaderView = searchController.searchBar
   }
   
-  override func viewDidAppear(animated: Bool) {
+  override func viewDidAppear(_ animated: Bool) {
     super.viewDidAppear(animated)
     
-    searchController.active = true
+    searchController.isActive = true
   }
   
-  override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+  override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
     return 1 + (data?.count ?? 0)
   }
   
-  override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+  override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     var cell: UITableViewCell
     
     if let data = data {
       if indexPath.row == data.count {
-        cell = tableView.dequeueReusableCellWithIdentifier(infoCellIdentifier) ??
-          UITableViewCell(style: .Default, reuseIdentifier: infoCellIdentifier)
+        cell = tableView.dequeueReusableCell(withIdentifier: infoCellIdentifier) ??
+          UITableViewCell(style: .default, reuseIdentifier: infoCellIdentifier)
         
-        cell.textLabel?.textAlignment = .Center
+        cell.textLabel?.textAlignment = .center
         cell.textLabel?.text = "\(data.count) results"
       } else {
         let result = data[indexPath.row]
-        cell = tableView.dequeueReusableCellWithIdentifier(searchResultCellIdentifier) ??
-          UITableViewCell(style: .Subtitle, reuseIdentifier: searchResultCellIdentifier)
+        cell = tableView.dequeueReusableCell(withIdentifier: searchResultCellIdentifier) ??
+          UITableViewCell(style: .subtitle, reuseIdentifier: searchResultCellIdentifier)
         
         let contextString = result.contextString
         let queryRange = result.queryInContextRange
-        let range = NSMakeRange(contextString.startIndex.distanceTo(queryRange.startIndex), queryRange.count)
+        let startLocation = contextString.distance(from: contextString.startIndex, to: queryRange.lowerBound) as Int
+        let endLocation = contextString.distance(from: contextString.startIndex, to: queryRange.upperBound) as Int
+        let range = NSMakeRange(startLocation, (endLocation - startLocation))
         
         if let textLabel = cell.textLabel {
           var context = NSMutableAttributedString(string: contextString)
           context.addAttribute(NSFontAttributeName,
-                               value: UIFont.boldSystemFontOfSize(textLabel.font.pointSize),
+                               value: UIFont.boldSystemFont(ofSize: textLabel.font.pointSize),
                                range: range)
           
           textLabel.attributedText = context
@@ -90,34 +92,34 @@ class IRPDFSearchResultsViewController: UITableViewController {
         cell.detailTextLabel?.text = "Page: \(result.page)"
       }
     } else {
-      cell = tableView.dequeueReusableCellWithIdentifier(loadingCellIdentifier) ??
+      cell = tableView.dequeueReusableCell(withIdentifier: loadingCellIdentifier) ??
         IRPDFLoadingTableViewCell(reuseIdentifier: loadingCellIdentifier)
     }
     
     return cell
   }
   
-  override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-    guard let data = data where indexPath.row != data.count else {
+  override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+    guard let data = data, indexPath.row != data.count else {
       return
     }
     
     let result = data[indexPath.row]
     
-    searchController.dismissViewControllerAnimated(false, completion: nil)
+    searchController.dismiss(animated: false, completion: nil)
     
-    dismissViewControllerAnimated(true) {
+    dismiss(animated: true) {
       self.searchDelegate?.searchResultsViewController(self, didSelectResult: result)
     }
   }
   
-  override func prefersStatusBarHidden() -> Bool {
+  override var prefersStatusBarHidden : Bool {
     return true
   }
 }
 
 extension IRPDFSearchResultsViewController: UISearchResultsUpdating {
-  func updateSearchResultsForSearchController(searchController: UISearchController) {
+  func updateSearchResults(for searchController: UISearchController) {
     let text = searchController.searchBar.text ?? ""
     
     searchQuery = text
@@ -142,13 +144,13 @@ extension IRPDFSearchResultsViewController: UISearchResultsUpdating {
 }
 
 extension IRPDFSearchResultsViewController: UISearchBarDelegate {
-  public func searchBarCancelButtonClicked(searchBar: UISearchBar) {
-    dismissViewControllerAnimated(true, completion: nil)
+  public func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+    dismiss(animated: true, completion: nil)
   }
 }
 
 extension IRPDFSearchResultsViewController: UISearchControllerDelegate {
-  func didPresentSearchController(searchController: UISearchController) {
+  func didPresentSearchController(_ searchController: UISearchController) {
     searchController.searchBar.becomeFirstResponder()
   }
 }

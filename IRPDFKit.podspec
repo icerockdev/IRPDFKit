@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'IRPDFKit'
-  s.version          = '0.1.0'
+  s.version          = '1.0.0'
   s.summary          = 'A short description of IRPDFKit.'
 
 # This description is used to generate tags and improve search results.
@@ -38,5 +38,7 @@ TODO: Add long description of the pod here.
 
   # s.public_header_files = 'Pod/Classes/**/*.h'
   # s.frameworks = 'UIKit', 'MapKit'
-  s.dependency 'JASON', '~> 2.2'
+  s.dependency 'JASON', '~> 3.1'
+
+  s.pod_target_xcconfig = { 'SWIFT_VERSION' => '3.0' }
 end

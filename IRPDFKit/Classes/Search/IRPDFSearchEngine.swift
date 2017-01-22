@@ -6,22 +6,22 @@
 import Foundation
 import JASON
 
-public class IRPDFSearchEngine {
-  internal lazy var workQueue:NSOperationQueue = {
-    var queue = NSOperationQueue()
+open class IRPDFSearchEngine {
+  internal lazy var workQueue:OperationQueue = {
+    var queue = OperationQueue()
     queue.name = "IRPDF search engine queue"
     queue.maxConcurrentOperationCount = 1
     return queue
   }()
   
-  internal var readContentOperation: NSOperation?
-  internal var searchOperation: NSOperation?
+  internal var readContentOperation: Operation?
+  internal var searchOperation: Operation?
   
   internal var pages: [IRPDFPageData]?
   
-  internal let documentUrl: NSURL
+  internal let documentUrl: URL
   
-  public init(documentUrl: NSURL) {
+  public init(documentUrl: URL) {
     self.documentUrl = documentUrl
   }
   
@@ -30,7 +30,7 @@ public class IRPDFSearchEngine {
     readContentOperation?.cancel()
   }
   
-  public func search(_ query: String, closure: ((String, [IRPDFSearchResult]) -> Void)) {
+  open func search(_ query: String, closure: @escaping ((String, [IRPDFSearchResult]) -> Void)) {
     searchOperation?.cancel()
     
     searchOperation = IRPDFSearchOperation(searchEngine: self, query: query, closure: closure)
@@ -48,7 +48,7 @@ public class IRPDFSearchEngine {
   }
 }
 
-class IRPDFReadContentOperation: NSOperation {
+class IRPDFReadContentOperation: Operation {
   weak var searchEngine: IRPDFSearchEngine?
   
   init(searchEngine: IRPDFSearchEngine) {
@@ -56,17 +56,17 @@ class IRPDFReadContentOperation: NSOperation {
   }
   
   override func main() {
-    if cancelled {
+    if isCancelled {
       return
     }
     
     var results: String? = nil
     var webView: UIWebView!
     
-    dispatch_sync(dispatch_get_main_queue()) {
+    DispatchQueue.main.sync {
       webView = UIWebView()
-      let bundle = NSBundle(forClass: IRPDFReadContentOperation.self)
-      let pdfJsIndexUrl = bundle.URLForResource("index",
+      let bundle = Bundle(for: IRPDFReadContentOperation.self)
+      let pdfJsIndexUrl = bundle.url(forResource: "index",
                                                 withExtension: "html",
                                                 subdirectory: "IRPDFKit.bundle")!
       
@@ -75,45 +75,45 @@ class IRPDFReadContentOperation: NSOperation {
       }
       
       let pdfFilePath = searchEngine.documentUrl
-        .absoluteString!
-        .stringByReplacingOccurrencesOfString("file://", withString: "")
+        .absoluteString
+        .replacingOccurrences(of: "file://", with: "")
       
-      let urlWithFile = "\(pdfJsIndexUrl.absoluteString!)?file=\(pdfFilePath)"
-      webView.loadRequest(NSURLRequest(URL: NSURL(string: urlWithFile)!))
+      let urlWithFile = "\(pdfJsIndexUrl.absoluteString)?file=\(pdfFilePath)"
+      webView.loadRequest(URLRequest(url: URL(string: urlWithFile)!))
     }
     
     if searchEngine == nil {
       return
     }
     
-    while results == nil && !cancelled  {
-      dispatch_sync(dispatch_get_main_queue()) {
-        let result = webView.stringByEvaluatingJavaScriptFromString("documentData")
-        if let result = result where result != "" {
+    while results == nil && !isCancelled  {
+      DispatchQueue.main.sync {
+        let result = webView.stringByEvaluatingJavaScript(from: "documentData")
+        if let result = result, result != "" {
           results = result
         }
       }
       
-      NSThread.sleepForTimeInterval(0.1)
+      Thread.sleep(forTimeInterval: 0.1)
     }
     
-    if cancelled {
+    if isCancelled {
       return
     }
     
-    let json = JSON(results!.dataUsingEncoding(NSUTF8StringEncoding))
+    let json = JSON(results!.data(using: String.Encoding.utf8))
     
     searchEngine?.pages = json.map { return IRPDFPageData($0) }
     searchEngine?.readContentOperation = nil
   }
 }
 
-class IRPDFSearchOperation: NSOperation {
+class IRPDFSearchOperation: Operation {
   weak var searchEngine: IRPDFSearchEngine?
   let query: String
   let closure: ((String, [IRPDFSearchResult]) -> Void)
   
-  init(searchEngine: IRPDFSearchEngine, query: String, closure: ((String, [IRPDFSearchResult]) -> Void)) {
+  init(searchEngine: IRPDFSearchEngine, query: String, closure: @escaping ((String, [IRPDFSearchResult]) -> Void)) {
     self.searchEngine = searchEngine
     self.query = query
     self.closure = closure
@@ -136,19 +136,19 @@ class IRPDFSearchOperation: NSOperation {
         }
         
         let range = str
-          .rangeOfString(query,
-                         options: NSStringCompareOptions.CaseInsensitiveSearch,
-                         range: start ... str.endIndex.advancedBy(-1),
+          .range(of: query,
+                         options: NSString.CompareOptions.caseInsensitive,
+                         range: start..<str.endIndex,
                          locale: nil)
         
         guard let resultRange = range else {
           break
         }
         
-        start = resultRange.endIndex
+        start = resultRange.upperBound
         
-        let startPosition = str.startIndex.distanceTo(resultRange.startIndex)
-        let endPosition = str.startIndex.distanceTo(resultRange.endIndex)
+        let startPosition = str.characters.distance(from: str.startIndex, to: resultRange.lowerBound)
+        let endPosition = str.characters.distance(from: str.startIndex, to: resultRange.upperBound)
         
         var parts = [IRPDFSearchResultPart]()
         
@@ -186,10 +186,12 @@ class IRPDFSearchOperation: NSOperation {
             start = 0
           }
           
+          let rangeLen = endPosition - startPosition
+          
           if endInRange && startInRange {
-            end = start + range!.count
+            end = start + rangeLen
           } else if endInRange {
-            end = range!.count - (textData.startPosition - startPosition)
+            end = rangeLen - (textData.startPosition - startPosition)
           } else {
             end = textData.length
           }
@@ -216,13 +218,13 @@ class IRPDFSearchOperation: NSOperation {
         
         let start: String.Index
         if startPosition > 10 {
-          start = resultRange.startIndex.advancedBy(-10)
+          start = str.index(resultRange.lowerBound, offsetBy: -10)
         } else {
-          start = resultRange.startIndex
+          start = resultRange.lowerBound
         }
         
-        let contextString = page.textContent.substringFromIndex(start)
-        let queryRange = contextString.rangeOfString(query, options: NSStringCompareOptions.CaseInsensitiveSearch, locale: nil)!
+        let contextString = page.textContent.substring(from: start)
+        let queryRange = contextString.range(of: query, options: NSString.CompareOptions.caseInsensitive, locale: nil)!
         
         let searchResult = IRPDFSearchResult(page: page.number,
                                              contextString: contextString,
@@ -235,11 +237,11 @@ class IRPDFSearchOperation: NSOperation {
       }
     }
     
-    if cancelled {
+    if isCancelled {
       return
     }
     
-    dispatch_sync(dispatch_get_main_queue()) {
+    DispatchQueue.main.sync {
       self.closure(query, searchResults)
     }
   }

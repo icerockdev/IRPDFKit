@@ -7,13 +7,13 @@ import UIKit
 import CoreGraphics
 import JASON
 
-public class IRPDFDocumentViewController: UIViewController {
+open class IRPDFDocumentViewController: UIViewController {
   @IBOutlet weak var pdfPagesScrollView: UIScrollView!
   
-  public var pdfDocumentUrl: NSURL? {
+  open var pdfDocumentUrl: URL? {
     didSet {
       if let url = pdfDocumentUrl {
-        pdfDocument = CGPDFDocumentCreateWithURL(url)
+        pdfDocument = CGPDFDocument(url as CFURL)
         searchEngine = IRPDFSearchEngine(documentUrl: url)
       } else {
         pdfDocument = nil
@@ -31,7 +31,7 @@ public class IRPDFDocumentViewController: UIViewController {
   var searchEngine: IRPDFSearchEngine?
   var lastSearchQuery: String?
   
-  public override func viewDidLoad() {
+  open override func viewDidLoad() {
     super.viewDidLoad()
     
     if pdfPagesScrollView == nil {
@@ -40,25 +40,25 @@ public class IRPDFDocumentViewController: UIViewController {
       
       pdfPagesScrollView = scrollView
       
-      pdfPagesScrollView.scrollEnabled = true
+      pdfPagesScrollView.isScrollEnabled = true
       pdfPagesScrollView.bounces = true
       pdfPagesScrollView.alwaysBounceVertical = true
-      pdfPagesScrollView.backgroundColor = UIColor.groupTableViewBackgroundColor()
+      pdfPagesScrollView.backgroundColor = UIColor.groupTableViewBackground
       pdfPagesScrollView.showsVerticalScrollIndicator = true
-      pdfPagesScrollView.autoresizingMask = [.FlexibleWidth, .FlexibleHeight]
+      pdfPagesScrollView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
       pdfPagesScrollView.maximumZoomScale = 8
       pdfPagesScrollView.minimumZoomScale = 1
     }
     
     pdfPagesScrollView.delegate = self
     
-    var doubleTapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(doubleTapGesture))
+    let doubleTapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(doubleTapGesture))
     doubleTapGestureRecognizer.numberOfTapsRequired = 2
     
     pdfPagesScrollView.addGestureRecognizer(doubleTapGestureRecognizer)
   }
   
-  public func reloadData() {
+  open func reloadData() {
     guard let _ = pdfPagesScrollView else {
       return
     }
@@ -78,27 +78,27 @@ public class IRPDFDocumentViewController: UIViewController {
     pdfPagesScrollView.addSubview(pdfView)
     
     pdfPagesScrollView.addConstraint(NSLayoutConstraint(item: pdfPagesScrollView,
-      attribute: .Top, relatedBy: .Equal, toItem: pdfView,
-      attribute: .Top, multiplier: 1, constant: 0))
+      attribute: .top, relatedBy: .equal, toItem: pdfView,
+      attribute: .top, multiplier: 1, constant: 0))
     
     pdfPagesScrollView.addConstraint(NSLayoutConstraint(item: pdfPagesScrollView,
-      attribute: .Bottom, relatedBy: .Equal, toItem: pdfView,
-      attribute: .Bottom, multiplier: 1, constant: 0))
+      attribute: .bottom, relatedBy: .equal, toItem: pdfView,
+      attribute: .bottom, multiplier: 1, constant: 0))
     
     pdfPagesScrollView.addConstraint(NSLayoutConstraint(item: pdfPagesScrollView,
-      attribute: .CenterX, relatedBy: .Equal, toItem: pdfView,
-      attribute: .CenterX, multiplier: 1, constant: 0))
+      attribute: .centerX, relatedBy: .equal, toItem: pdfView,
+      attribute: .centerX, multiplier: 1, constant: 0))
     
     pdfPagesScrollView.addConstraint(NSLayoutConstraint(item: pdfPagesScrollView,
-      attribute: .Leading, relatedBy: .Equal, toItem: pdfView,
-      attribute: .Leading, multiplier: 1, constant: 0))
+      attribute: .leading, relatedBy: .equal, toItem: pdfView,
+      attribute: .leading, multiplier: 1, constant: 0))
     
     pdfPagesScrollView.addConstraint(NSLayoutConstraint(item: pdfPagesScrollView,
-      attribute: .Trailing, relatedBy: .Equal, toItem: pdfView,
-      attribute: .Trailing, multiplier: 1, constant: 0))
+      attribute: .trailing, relatedBy: .equal, toItem: pdfView,
+      attribute: .trailing, multiplier: 1, constant: 0))
   }
 
-  public func search(_ query: String) {
+  open func search(_ query: String) {
     searchEngine?.search(query) {
       [weak self] (_, searchResults) in
       
@@ -106,7 +106,7 @@ public class IRPDFDocumentViewController: UIViewController {
     }
   }
   
-  public func presentSearchViewController(anchor: UIBarButtonItem) {
+  open func presentSearchViewController(_ anchor: UIBarButtonItem) {
     guard let _ = searchEngine else {
       return
     }
@@ -115,15 +115,15 @@ public class IRPDFDocumentViewController: UIViewController {
     searchViewController.searchDelegate = self
     searchViewController.searchEngine = searchEngine
     searchViewController.searchQuery = lastSearchQuery
-    searchViewController.modalPresentationStyle = .Popover
+    searchViewController.modalPresentationStyle = .popover
     searchViewController.popoverPresentationController?.barButtonItem = anchor
     
-    presentViewController(searchViewController, animated: true, completion: nil)
+    present(searchViewController, animated: true, completion: nil)
   }
 }
 
 extension IRPDFDocumentViewController {
-  func doubleTapGesture(gestureRecognizer: UITapGestureRecognizer) {
+  func doubleTapGesture(_ gestureRecognizer: UITapGestureRecognizer) {
     
     let zoomScale: CGFloat
     if pdfPagesScrollView.zoomScale > pdfPagesScrollView.minimumZoomScale {
@@ -137,18 +137,18 @@ extension IRPDFDocumentViewController {
 }
 
 extension IRPDFDocumentViewController: UIScrollViewDelegate {
-  public func viewForZoomingInScrollView(scrollView: UIScrollView) -> UIView? {
+  public func viewForZooming(in scrollView: UIScrollView) -> UIView? {
     return scrollView.subviews[0]
   }
 }
 
 extension IRPDFDocumentViewController: IRPDFSearchResultsDelegate {
-  func searchResultsViewController(viewController: IRPDFSearchResultsViewController,
+  func searchResultsViewController(_ viewController: IRPDFSearchResultsViewController,
                                    receiveResults results: [IRPDFSearchResult]?) {
     pdfView.highlightedSearchResults = results
   }
   
-  func searchResultsViewController(viewController: IRPDFSearchResultsViewController,
+  func searchResultsViewController(_ viewController: IRPDFSearchResultsViewController,
                                    didSelectResult result: IRPDFSearchResult) {
     pdfView.highlightedSearchResults = [result]
     
@@ -158,7 +158,7 @@ extension IRPDFDocumentViewController: IRPDFSearchResultsDelegate {
     }
   }
   
-  func searchResultsViewController(viewController: IRPDFSearchResultsViewController,
+  func searchResultsViewController(_ viewController: IRPDFSearchResultsViewController,
                                    queryChanged query: String?) {
     lastSearchQuery = query
   }

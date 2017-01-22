@@ -11,10 +11,10 @@ class IRPDFLoadingTableViewCell: UITableViewCell {
   init(reuseIdentifier identifier: String?) {
     activityIndicator = UIActivityIndicatorView()
     activityIndicator.hidesWhenStopped = false
-    activityIndicator.hidden = false
-    activityIndicator.color = UIColor.blackColor()
+    activityIndicator.isHidden = false
+    activityIndicator.color = UIColor.black
     
-    super.init(style: .Default, reuseIdentifier: identifier)
+    super.init(style: .default, reuseIdentifier: identifier)
     
     contentView.addSubview(activityIndicator)
   }
@@ -28,12 +28,12 @@ class IRPDFLoadingTableViewCell: UITableViewCell {
     
     let rect = contentView.bounds
     let itemSize = activityIndicator.bounds.size
-    let halfItemSize = CGSizeMake(itemSize.width / 2.0, itemSize.height / 2.0)
+    let halfItemSize = CGSize(width: itemSize.width / 2.0, height: itemSize.height / 2.0)
     
-    activityIndicator.frame = CGRectMake(rect.width / 2.0 - halfItemSize.width,
-                                         rect.height / 2.0 - halfItemSize.height,
-                                         itemSize.width,
-                                         itemSize.height)
+    activityIndicator.frame = CGRect(x: rect.width / 2.0 - halfItemSize.width,
+                                         y: rect.height / 2.0 - halfItemSize.height,
+                                         width: itemSize.width,
+                                         height: itemSize.height)
   }
   
   override func didMoveToSuperview() {

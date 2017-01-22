@@ -1,7 +1,7 @@
 PODS:
-  - IRPDFKit (0.1.0):
-    - JASON (~> 2.2)
-  - JASON (2.2.1)
+  - IRPDFKit (1.0.0):
+    - JASON (~> 3.1)
+  - JASON (3.1)
 
 DEPENDENCIES:
   - IRPDFKit (from `../`)
@@ -11,9 +11,9 @@ EXTERNAL SOURCES:
     :path: "../"
 
 SPEC CHECKSUMS:
-  IRPDFKit: 3700a9b6e2df0cec1d7371209e14b5508eb9af2c
-  JASON: 2fdba956dfbf8663369b81a8176e6fcb225ebf10
+  IRPDFKit: cc97ff29e34602aae332bbf6e3d18f439bb05dc5
+  JASON: c1204b01c9979eef35b6948ca939aac5e7bef081
 
 PODFILE CHECKSUM: e7ce44c608c77f6dfa420097391b14050cf8163d
 
-COCOAPODS: 1.0.1
+COCOAPODS: 1.1.1
